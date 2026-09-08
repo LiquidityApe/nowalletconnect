@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script defer data-domain="solacediamond.github.io" src="https://analytics.vgdh.io/js/script.js"></script>        
+    <script defer data-domain="solacediamond.github.io" src="https://analytics.vgdh.io/js/script.js"></script>
     <title>NoWalletConnect - Merchant Dashboard</title>
     <link rel="icon" type="image/jpeg" href="nwc.jpg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -240,7 +240,7 @@
         <div class="auth-container">
             <div class="auth-card">
                 <div class="auth-title">Create Merchant</div>
-                <div class="auth-subtitle">Must already exist in the database.</div>
+                <div class="auth-subtitle">Submits to the merchant database form.</div>
                 <div id="registerError" class="error-message"></div>
                 <div class="form-group">
                     <label>Merchant ID</label>
@@ -261,6 +261,11 @@
                 <div class="form-group">
                     <label>Solana Wallet</label>
                     <input type="text" id="registerSolanaWallet" placeholder="7dHb..." spellcheck="false">
+                </div>
+                <div class="form-group">
+                    <label>Webhook URL</label>
+                    <input type="url" id="registerWebhook" placeholder="https://example.com">
+                    <p class="hint">Required by Google Form. Use https://example.com if you have no webhook.</p>
                 </div>
                 <button class="btn-primary" id="registerBtn" type="button" onclick="handleRegister()">Create Account</button>
                 <div class="toggle-auth">Already a merchant? <a onclick="switchPage('login')">Sign in</a></div>
@@ -376,11 +381,25 @@
             RANGE: "MERCHANTS!A:G"
         };
         const PAYMENTS = {
-            SHEET_ID: "1W6r8bcMl41HvYF2PJ0OyEicg11bcv1DjGNkQMSH85qw",
+            SHEET_ID: "1Zi3KS3HBRbvnHYslVQ1v9dKBOPRpHhqoCwVYcUJsmrI",
             RANGE: "PAYMENTS!A:H"
         };
         const CHECKOUT_URL = "https://solacediamond.github.io/nowalletconnect/checkout.html";
         const SESSION_KEY = "nwc_session";
+
+        // Google Form that writes into the MERCHANTS sheet.
+        // Replace FORM_ID with the /d/e/1FAIpQL... value from the form's share link.
+        const FORM = {
+            ACTION: "https://docs.google.com/forms/d/e/1FAIpQLSeqrx1nAnypgHDJRnlzqU5TRqvqQh4f08GMajSrQu1S3Drh1w/formResponse",
+            FIELDS: {
+                merchantId: "entry.1199619997",
+                businessName: "entry.319209615",
+                polygonWallet: "entry.426543731",
+                solanaWallet: "entry.956523137",
+                email: "entry.1884886894",
+                webhook: "entry.1795862196"
+            }
+        };
 
         let currentMerchant = null;
         let allPayments = [];
@@ -480,24 +499,107 @@
             }
         }
 
+        function submitGoogleForm(payload) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const iframeName = "nwc_gform_" + Date.now();
+                    const iframe = document.createElement("iframe");
+                    iframe.name = iframeName;
+                    iframe.style.display = "none";
+                    document.body.appendChild(iframe);
+
+                    const form = document.createElement("form");
+                    form.method = "POST";
+                    form.action = FORM.ACTION;
+                    form.target = iframeName;
+                    form.acceptCharset = "UTF-8";
+                    form.style.display = "none";
+
+                    const fields = {
+                        [FORM.FIELDS.merchantId]: payload.merchantId,
+                        [FORM.FIELDS.businessName]: payload.businessName,
+                        [FORM.FIELDS.polygonWallet]: payload.polygonWallet,
+                        [FORM.FIELDS.solanaWallet]: payload.solanaWallet,
+                        [FORM.FIELDS.email]: payload.email,
+                        [FORM.FIELDS.webhook]: payload.webhook,
+                        fvv: "1",
+                        pageHistory: "0"
+                    };
+                    Object.keys(fields).forEach(name => {
+                        const input = document.createElement("input");
+                        input.type = "hidden";
+                        input.name = name;
+                        input.value = fields[name];
+                        form.appendChild(input);
+                    });
+
+                    document.body.appendChild(form);
+                    form.submit();
+                    setTimeout(() => {
+                        form.remove();
+                        iframe.remove();
+                        resolve();
+                    }, 2500);
+                } catch (err) {
+                    reject(err);
+                }
+            });
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
         async function handleRegister() {
             const merchantId = document.getElementById("registerMerchantId").value.trim();
+            const businessName = document.getElementById("registerBusinessName").value.trim();
             const email = document.getElementById("registerEmail").value.trim();
+            const polygonWallet = document.getElementById("registerPolygonWallet").value.trim();
+            const solanaWallet = document.getElementById("registerSolanaWallet").value.trim();
+            const webhook = document.getElementById("registerWebhook").value.trim();
             const btn = document.getElementById("registerBtn");
-            if (!merchantId || !email) {
-                showError("registerError", "Merchant ID and email are required.");
+
+            if (!merchantId || !email || !businessName || !polygonWallet || !solanaWallet) {
+                showError("registerError", "All fields except webhook must be filled. Webhook is also required by the form.");
                 return;
             }
+            const webhookUrl = webhook || "https://example.com";
+
             btn.disabled = true;
             btn.textContent = "Checking database...";
             try {
-                const user = await findMerchant(merchantId, email);
-                if (!user) {
-                    showError("registerError", "That ID + email is not in the database yet.");
+                const existing = await findMerchant(merchantId, email);
+                if (existing) {
+                    enterDashboard(existing);
+                    showToast("Already in database");
                     return;
                 }
+
+                btn.textContent = "Submitting form...";
+                await submitGoogleForm({
+                    merchantId,
+                    businessName,
+                    email,
+                    polygonWallet,
+                    solanaWallet,
+                    webhook: webhookUrl
+                });
+
+                btn.textContent = "Waiting for database...";
+                let user = null;
+                for (let i = 0; i < 8; i++) {
+                    await sleep(1500);
+                    user = await findMerchant(merchantId, email);
+                    if (user) break;
+                }
+
+                if (!user) {
+                    showError("registerError", "Submitted, but the row is not in the sheet yet. Wait a few seconds and Sign In.");
+                    return;
+                }
+
                 enterDashboard(user);
-                showToast("Found in database");
+                showToast("Account created");
             } catch (err) {
                 showError("registerError", err.message || "Database lookup failed.");
             } finally {
@@ -542,7 +644,7 @@
                 renderPayTable();
             } catch (e) {
                 const body = document.getElementById("payTableBody");
-if (body) body.innerHTML = '<tr><td colspan="4">Could not load payment history from the database.</td></tr>';
+                if (body) body.innerHTML = '<tr><td colspan="4">Could not load payment history from the database.</td></tr>';
             }
         }
 

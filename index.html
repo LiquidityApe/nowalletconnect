@@ -1277,7 +1277,7 @@ async function loadMerchantForGateway(merchantId, amount, network) {
     }
 
     // ✅ Get return URL from Google Sheet
-    GATEWAY.returnUrl = merchant.webhookUrl;  // ✅ Uses column 6 from sheet
+    GATEWAY.returnUrl = merchant.webhookUrl;  // ✅ Uses column 6 from database
     GATEWAY.merchantId = merchantId;
     GATEWAY.amount = amount;
     GATEWAY.isGatewayMode = true;
@@ -1388,7 +1388,7 @@ async function recordPaymentToSheet(paymentData) {
 
 async function fetchPayments() {
   try {
-    // ✅ NEW Sheet ID for PAYMENTS
+    // ✅ NEW Database ID for PAYMENTS
     const url = `https://sheets.googleapis.com/v4/spreadsheets/1W6r8bcMl41HvYF2PJ0OyEicg11bcv1DjGNkQMSH85qw/values/'PAYMENTS'!A:H?key=${SHEETS.NWC_API_KEY}`;
     
     console.log('📥 Fetching from:', url);
@@ -1434,7 +1434,7 @@ async function fetchMerchants() {
     const rows = data.values.slice(1);
 
     for (const row of rows) {
-      // Your sheet order:
+      // Your database order:
       // [0]=created_at, [1]=merchant_id, [2]=name, [3]=polygon_wallet, 
       // [4]=solana_wallet, [5]=email, [6]=webhook_url
       
@@ -1488,7 +1488,21 @@ function startRedirectCountdown() {
 
 // ✅ Return to merchant website
 function returnToMerchant() {
-  if (GATEWAY.returnUrl) {
+  if (!GATEWAY.returnUrl) return;
+
+  const txLink = document.getElementById("txLink");
+  const txHash = (txLink && (txLink.title || txLink.textContent)) || "";
+
+  try {
+    const url = new URL(GATEWAY.returnUrl);
+    url.searchParams.set("payment_id", "pay_" + Date.now());
+    url.searchParams.set("tx_hash", txHash);
+    url.searchParams.set("amount", String(GATEWAY.amount || state.expectedAmount || ""));
+    url.searchParams.set("merchant", GATEWAY.merchantId || "");
+    url.searchParams.set("network", state.network || "");
+    url.searchParams.set("status", "success");
+    window.location.href = url.toString();
+  } catch (e) {
     window.location.href = GATEWAY.returnUrl;
   }
 }

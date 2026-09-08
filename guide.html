@@ -206,6 +206,24 @@
         .price-label { color: #94a3b8; font-size: 0.85rem; }
         .price-note { color: #94a3b8; font-size: 0.9rem; }
 
+        table.param {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 0.9rem;
+        }
+
+        table.param th,
+        table.param td {
+            text-align: left;
+            padding: 10px 8px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+            color: #94a3b8;
+        }
+
+        table.param th { color: #00d4ff; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+        table.param td:first-child { color: #fbbf24; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; }
+
         .faq-item {
             background: rgba(30, 41, 59, 0.5);
             border: 1px solid rgba(148, 163, 184, 0.12);
@@ -325,25 +343,58 @@
                 <div class="step-number">1</div>
                 <div class="step-title">Get Your Merchant ID</div>
                 <div class="step-desc">
-                    Pay $1 and get your unique merchant ID (for example, <span class="highlight">NWC</span>).
-                    <br><br>
-                    This ID identifies your store when customers make payments. We renew your merchant ID monthly at $1.
+                    Register and get your unique merchant ID (for example, <span class="highlight">NWC</span>).
+                    Save your Polygon wallet, Solana wallet, and a return URL such as
+                    <code class="inline-code">https://yoursite.com/order-complete</code>.
+                    After payment, the buyer is sent back to that URL with success parameters.
                 </div>
             </div>
 
             <div class="step">
                 <div class="step-number">2</div>
+                <div class="step-title">Build a payment link</div>
+                <div class="step-desc">
+                    Send customers to the payment page with your merchant ID.
+                    Add <span class="highlight">amount</span> and/or <span class="highlight">network</span> only when you want those values locked.
+                    Anything you leave out, the customer fills in themselves.
+                    <br><br>
+                    <strong>Base URL:</strong>
+                    <br>
+                    <code class="inline-code">https://solacediamond.github.io/nowalletconnect/pay.html?merchant=MERCHANT_ID</code>
+                </div>
+                <table class="param">
+                    <thead>
+                        <tr><th>Param</th><th>Required</th><th>If present</th><th>If missing</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>merchant</td><td>Yes</td><td>Shown on the page</td><td>Link is invalid</td></tr>
+                        <tr><td>amount</td><td>No</td><td>Locked. Customer cannot change it</td><td>Customer types the amount</td></tr>
+                        <tr><td>network</td><td>No</td><td>Locked to polygon or solana</td><td>Customer picks the network</td></tr>
+                    </tbody>
+                </table>
+                <div class="step-desc" style="margin-top:14px;">
+                    <strong>Examples</strong><br>
+                    Customer chooses amount and network:<br>
+                    <code class="inline-code">pay.html?merchant=NWC</code><br><br>
+                    Fixed $49.99 package, customer picks network:<br>
+                    <code class="inline-code">pay.html?merchant=NWC&amp;amount=49.99</code><br><br>
+                    Fixed Solana, customer types amount:<br>
+                    <code class="inline-code">pay.html?merchant=NWC&amp;network=solana</code><br><br>
+                    Fully locked package:<br>
+                    <code class="inline-code">pay.html?merchant=NWC&amp;amount=49.99&amp;network=polygon</code>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
                 <div class="step-title">Copy This Code</div>
                 <div class="step-desc">
-                    Copy the button code below. Paste it on your website where you want the Pay Now button to appear.
-                    <br><br>
-                    You can customize anything in the button: the text, colors, padding, border radius, or font size.
-                    Keep the <span class="highlight">href</span> and replace <span class="highlight">MERCHANT_ID</span> with your ID.
-                    Leave the “Powered by NoWalletConnect” line so customers know who processes the payment.
+                    Paste a button for each product. This example locks the price at 49.99 USDT and lets the customer pick the network.
+                    Replace <span class="highlight">MERCHANT_ID</span> and the amount. Keep the Powered by line.
                 </div>
 
                 <div class="code-block">
-                    <button class="copy-btn" type="button" onclick="copyCode(this)" aria-label="Copy code" title="Copy">
+                    <button class="copy-btn" type="button" onclick="copyFrom(this)" aria-label="Copy code" title="Copy">
                         <svg class="icon-copy" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="9" y="9" width="13" height="13" rx="2"></rect>
                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -352,10 +403,10 @@
                             <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
                     </button>
-                    <pre id="payNowCode">&lt;div style="display:inline-block;text-align:center;"&gt;
-  &lt;a href="https://solacediamond.github.io/nowalletconnect/checkout.html?merchant=MERCHANT_ID" style="text-decoration:none;"&gt;
+                    <pre>&lt;div style="display:inline-block;text-align:center;"&gt;
+  &lt;a href="https://solacediamond.github.io/nowalletconnect/pay.html?merchant=MERCHANT_ID&amp;amount=49.99" style="text-decoration:none;"&gt;
     &lt;button style="padding:12px 24px;background:linear-gradient(135deg,#00d4ff,#7c3aed);color:#0f1419;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:16px;"&gt;
-      Pay Now
+      Pay 49.99 USDT
     &lt;/button&gt;
   &lt;/a&gt;
   &lt;div style="margin-top:8px;font-size:11px;font-family:sans-serif;"&gt;
@@ -366,24 +417,46 @@
             </div>
 
             <div class="step">
-                <div class="step-number">3</div>
-                <div class="step-title">Replace Your Merchant ID</div>
-                <div class="step-desc">
-                    In the code above, find <span class="highlight">MERCHANT_ID</span> and replace it with your actual merchant ID.
-                    <br><br>
-                    <strong>Example:</strong> if your ID is <span class="highlight">NWC</span>, the link becomes:
-                    <br>
-                    <code class="inline-code">https://solacediamond.github.io/nowalletconnect/checkout.html?merchant=NWC</code>
-                </div>
-            </div>
-
-            <div class="step">
                 <div class="step-number">4</div>
-                <div class="step-title">Paste on Your Website</div>
+                <div class="step-title">Read the success return</div>
                 <div class="step-desc">
-                    Paste the code on your website where you want customers to see the Pay Now button.
-                    <br><br>
-                    This can be on your product page, checkout page, or anywhere else.
+                    After USDT is confirmed, checkout redirects to your merchant webhook URL with these query params:
+                </div>
+                <table class="param">
+                    <thead>
+                        <tr><th>Param</th><th>Meaning</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>status</td><td>success</td></tr>
+                        <tr><td>amount</td><td>USDT amount paid</td></tr>
+                        <tr><td>tx_hash</td><td>On-chain transaction hash</td></tr>
+                        <tr><td>merchant</td><td>Your merchant ID</td></tr>
+                        <tr><td>network</td><td>polygon or solana</td></tr>
+                        <tr><td>payment_id</td><td>Local payment reference</td></tr>
+                    </tbody>
+                </table>
+                <div class="step-desc" style="margin-top:14px;">
+                    Example return:
+                    <br>
+                    <code class="inline-code">https://yoursite.com/order-complete?status=success&amp;amount=49.99&amp;tx_hash=0x…&amp;merchant=NWC&amp;network=polygon&amp;payment_id=pay_123</code>
+                </div>
+                <div class="code-block">
+                    <button class="copy-btn" type="button" onclick="copyFrom(this)" aria-label="Copy code" title="Copy">
+                        <svg class="icon-copy" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        <svg class="icon-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" hidden>
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </button>
+                    <pre>const q = new URLSearchParams(location.search);
+if (q.get("status") === "success" && q.get("merchant") === "MERCHANT_ID") {
+  const paid = parseFloat(q.get("amount"));
+  const tx = q.get("tx_hash");
+  const network = q.get("network");
+  // mark the order paid / show thank you
+}</pre>
                 </div>
             </div>
 
@@ -391,9 +464,8 @@
                 <div class="step-number">5</div>
                 <div class="step-title">Done</div>
                 <div class="step-desc">
-                    Customers can click the button and pay with crypto.
-                    <br><br>
-                    They enter the amount, choose the network, and complete payment.
+                    Customer opens your link, fills only the unlocked fields, pays the exact USDT amount,
+                    and is returned to your site with the success parameters.
                 </div>
             </div>
         </div>
@@ -403,12 +475,14 @@
                 <div class="success-title">What You Get</div>
                 <div class="success-text">
                     • Accept USDT on <strong>Polygon</strong> and <strong>Solana</strong><br>
+                    • Lock price, network, or both from the payment URL<br>
+                    • Let the customer fill any value you do not lock<br>
+                    • Return URL with status, amount, and tx hash<br>
                     • Instant payment verification<br>
                     • Direct deposits to your wallet<br>
-                    • Real-time transaction tracking<br>
+                    • Payment history in the merchant dashboard<br>
                     • No transaction fees<br>
-                    • Keep 100% of payments<br>
-                    • Merchant dashboard access
+                    • Keep 100% of payments
                 </div>
             </div>
         </div>
@@ -418,11 +492,41 @@
 
             <div class="faq-item" onclick="toggleFaq(this)">
                 <div class="faq-question">
+                    Can the customer change a locked amount?
+                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="faq-answer">
+                    No. If amount is in the URL, the field is read-only. If network is in the URL, those buttons are disabled.
+                </div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFaq(this)">
+                <div class="faq-question">
+                    How do I sell a specific package?
+                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="faq-answer">
+                    Put the package price in amount. Example: amount=9.99 for starter, amount=49.99 for pro. Use one button per package.
+                </div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFaq(this)">
+                <div class="faq-question">
+                    Where does the return URL come from?
+                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="faq-answer">
+                    From the Webhook URL saved on your merchant row. It is not passed in the payment link. Use a real page on your site.
+                </div>
+            </div>
+
+            <div class="faq-item" onclick="toggleFaq(this)">
+                <div class="faq-question">
                     How long does it take to set up?
                     <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </div>
                 <div class="faq-answer">
-                    About 5 minutes. Pay $1, copy the code, replace your merchant ID, and paste it on your website.
+                    About 5 minutes. Get a merchant ID, set wallets and a return URL, copy the button, add amount/network if you want them locked.
                 </div>
             </div>
 
@@ -432,7 +536,7 @@
                     <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </div>
                 <div class="faq-answer">
-                    No. The code is ready to copy-paste. You only replace your merchant ID and paste it on your site. You can also restyle the button if you want.
+                    The Pay button is copy-paste. Reading the success return needs a few lines of JavaScript on your thank-you page.
                 </div>
             </div>
 
@@ -442,7 +546,7 @@
                     <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </div>
                 <div class="faq-answer">
-                    Yes. Change the label, colors, size, or shape. Do not change the checkout link except for your merchant ID, and keep the Powered by NoWalletConnect line.
+                    Yes. Change the label, colors, size, or shape. Keep merchant in the href, add amount/network only when you want them locked, and keep the Powered by line.
                 </div>
             </div>
 
@@ -452,17 +556,7 @@
                     <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </div>
                 <div class="faq-answer">
-                    <strong>$1 setup</strong> when you sign up, plus <strong>$1/month</strong> for maintenance. No transaction fees. You keep 100% of every payment.
-                </div>
-            </div>
-
-            <div class="faq-item" onclick="toggleFaq(this)">
-                <div class="faq-question">
-                    What does the $1/month cover?
-                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </div>
-                <div class="faq-answer">
-                    Server maintenance, payment processing, dashboard hosting, and support for your account.
+                    $1 setup when you sign up, plus $1/month for maintenance. No transaction fees. You keep 100% of every payment.
                 </div>
             </div>
 
@@ -472,17 +566,7 @@
                     <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </div>
                 <div class="faq-answer">
-                    They click Pay Now, enter an amount, choose Polygon or Solana, and send USDT to the payment address. Payment is verified automatically.
-                </div>
-            </div>
-
-            <div class="faq-item" onclick="toggleFaq(this)">
-                <div class="faq-question">
-                    Can I cancel my account?
-                    <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </div>
-                <div class="faq-answer">
-                    Yes, anytime. No long-term contract and no cancellation fee.
+                    They open your link, fill any unlocked fields, send the exact USDT amount on the chosen network, and wait for automatic verification.
                 </div>
             </div>
 
@@ -492,7 +576,7 @@
                     <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </div>
                 <div class="faq-answer">
-                    Directly to your wallet. You control the funds. No middleman and no extra cut from us.
+                    Directly to the wallets saved on your merchant account. No middleman and no extra cut from us.
                 </div>
             </div>
         </div>
@@ -516,8 +600,8 @@
     </button>
 
     <script>
-        function copyCode(btn) {
-            const code = document.getElementById("payNowCode").innerText;
+        function copyFrom(btn) {
+            const code = btn.parentElement.querySelector("pre").innerText;
 
             navigator.clipboard.writeText(code).then(() => {
                 btn.classList.add("copied");
