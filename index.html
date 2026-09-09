@@ -96,6 +96,92 @@
             margin-bottom: 32px;
             font-size: 0.95rem;
         }
+        /* Payment Countdown Styles */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.timer-wrap {
+    margin: 4px 0 20px;
+}
+
+.timer-wrap.hidden {
+    display: none;
+}
+
+.timer-pill {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(124, 58, 237, 0.08));
+    border: 1px solid rgba(0, 212, 255, 0.28);
+    color: var(--primary);
+}
+
+.timer-clock {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    font-variant-numeric: tabular-nums;
+}
+
+.timer-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+.timer-wrap {
+    text-align: center;
+}
+
+.timer-inner {
+    width: 100%;
+    text-align: center;
+}
+
+.timer-clock {
+    text-align: center;
+}
+
+.timer-label {
+    text-align: center;
+}
+
+.timer-bar {
+    height: 4px;
+    margin-top: 10px;
+    border-radius: 99px;
+    background: rgba(148, 163, 184, 0.15);
+    overflow: hidden;
+}
+
+.timer-bar > span {
+    display: block;
+    height: 100%;
+    width: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    transform-origin: left center;
+    transition: transform 1s linear, background 0.3s ease;
+}
+
+.timer-wrap.urgent .timer-pill {
+    background: rgba(255, 107, 107, 0.1);
+    border-color: rgba(255, 107, 107, 0.4);
+    color: #ff6b6b;
+    animation: pulse 1s infinite;
+}
+
+.timer-wrap.urgent .timer-bar > span {
+    background: #ff6b6b;
+}
 
         .form-group {
             margin-bottom: 20px;
@@ -734,6 +820,38 @@
             }
         }
 
+
+        .site-footer {
+            margin: 8px 0 28px;
+            padding: 18px 16px 22px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+        .site-footer-brand {
+            font-size: 0.78rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+        .site-footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px 18px;
+        }
+        .site-footer-links a {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .site-footer-links a:hover { text-decoration: underline; }
+        .site-footer.hidden { display: none; }
+        @media (max-width: 600px) {
+            .site-footer { margin-bottom: 80px; }
+        }
+
         @media (max-width: 600px) {
             .card {
                 padding: 20px;
@@ -938,12 +1056,12 @@
 
 <div class="qr-box" id="qrBox">
     <div id="qrReady">
-        <div class="qr-hint" style="margin-bottom: 20px; font-size: 0.9rem;">
+        <div class="qr-hint" style="margin-bottom: 20px; font-size: 0.9rem;" id="showSenderText">
             Show this to the sender
         </div>
         <div id="qrcode"></div>
         <div class="address-display">
-            <div style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 600;">
+            <div style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 600;" id="addressLabel">
                 Receiving Address
             </div>
             <div class="address-text" id="displayWalletAddress">—</div>
@@ -964,7 +1082,14 @@
 <div class="info-box" id="watchStatus" style="text-align: center;">
     Waiting for the sender to pay
 </div>
-<div id="watchCountdown" style="text-align:center;color:var(--muted);font-size:0.85rem;margin:-8px 0 16px;">
+<div class="timer-wrap hidden" id="watchCountdown">
+    <div class="timer-pill">
+        <div class="timer-inner">
+            <div class="timer-label">Payment window</div>
+            <div class="timer-clock" id="watchCountdownText">15:00</div>
+        </div>
+    </div>
+    <div class="timer-bar"><span id="watchCountdownBar"></span></div>
 </div>
 
 <button class="btn-secondary" onclick="startAutoVerification()" style="padding: 16px;">
@@ -977,26 +1102,29 @@
             </div>
         </div>
 
-        <!-- SECTION 3: Waiting for Payment -->
-        <div class="section" id="section3">
-            <div class="card">
-                <h1 style="font-size: 1.5rem; margin-bottom: 40px;">NoWalletConnect</h1>
+<!-- SECTION 3: Waiting for Payment -->
+<div class="section" id="section3">
+    <div class="card">
+        <h1 style="font-size: 1.5rem; margin-bottom: 40px;">NoWalletConnect</h1>
 
-                <div style="text-align: center; padding: 40px 0;">
-                    <div class="spinner" style="margin: 0 auto 20px;"></div>
-                    <h2 style="font-size: 1.3rem; margin-bottom: 16px;">Waiting for Payment</h2>
-                    <p style="color: var(--muted); font-size: 1.1rem;"><strong id="waitAmount">50 USDT</strong></p>
-                </div>
-
-                <div class="info-box" style="text-align: center; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: var(--success);">
-                    We're confirming your payment...
-                </div>
-
-                <button class="btn-secondary" onclick="goToPaymentPage()" style="margin-top: 40px; padding: 16px;">
-                    Change Amount
-                </button>
-            </div>
+        <div style="text-align: center; padding: 40px 0;">
+            <div class="spinner" style="margin: 0 auto 20px;"></div>
+            <h2 style="font-size: 1.3rem; margin-bottom: 16px;">Waiting for Payment</h2>
+            <p style="color: var(--muted); font-size: 1.1rem;"><strong id="waitAmount">50 USDT</strong></p>
         </div>
+
+        <!-- TIMER HERE -->
+        <div id="watchCountdown3" style="text-align: center; color: var(--primary); font-size: 1.2rem; font-weight: 600; margin: 20px 0; font-family: 'JetBrains Mono', monospace; letter-spacing: 2px;"></div>
+
+        <div class="info-box" style="text-align: center; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: var(--success);">
+            We're confirming your payment...
+        </div>
+
+        <button class="btn-secondary" onclick="goToPaymentPage()" style="margin-top: 40px; padding: 16px;">
+            Change Amount
+        </button>
+    </div>
+</div>
 
         <!-- SECTION 4: Success -->
         <div class="section" id="section4">
@@ -1020,16 +1148,38 @@
                     </a>
                 </div>
 
-                <div style="text-align: center; margin-top: 40px;">
-                    <p style="color: var(--muted); font-size: 0.9rem;">Powered by NoWalletConnect</p>
-                </div>
-
-                <button class="btn-primary" onclick="newPayment()" style="margin-top: 40px; padding: 16px;">
-                    Accept Another Payment
-                </button>
-            </div>
-        </div>
+                 <!-- Redirect timer (shown in gateway mode) -->
+    <div id="redirectTimer" style="display: none; text-align: center; margin: 30px 0; padding: 20px; background: rgba(0, 212, 255, 0.05); border-radius: 10px;">
+      <p style="color: var(--muted); margin-bottom: 10px;">Redirecting to merchant in...</p>
+      <div style="font-size: 2.5rem; font-weight: 800; color: var(--primary); font-family: 'JetBrains Mono', monospace;" id="redirectCountdown">10</div>
     </div>
+
+    <div style="text-align: center; margin-top: 40px;">
+      <p style="color: var(--muted); font-size: 0.9rem;">Powered by NoWalletConnect</p>
+    </div>
+
+    <!-- ✅ Normal button (shown when NOT gateway mode) -->
+    <button class="btn-primary" id="acceptAnotherBtn" onclick="newPayment()" style="margin-top: 40px; padding: 16px;">
+      Accept Another Payment
+    </button>
+
+    <!-- ✅ Return to merchant button (shown only in gateway mode, clickable) -->
+    <button class="btn-primary" id="returnMerchantBtn" onclick="returnToMerchant()" style="margin-top: 40px; padding: 16px; display: none;">
+      Return to Merchant Website
+    </button>
+  </div>
+</div>
+
+
+    <footer class="site-footer" id="siteFooter">
+        <div class="site-footer-brand">NoWalletConnect</div>
+        <nav class="site-footer-links">
+            <a href="guide.html">Integration Guide</a>
+            <a href="merchant.html">Merchant Dashboard</a>
+            <a href="https://github.com/solacediamond/nowalletconnect/blob/main/NoWalletConnect-Docs.pdf" target="_blank" rel="noopener">Documentation</a>
+            <a href="https://t.me/noWalletConnect" target="_blank" rel="noopener">Telegram</a>
+        </nav>
+    </footer>
 
     <div class="toast" id="toast"></div>
 
@@ -1060,6 +1210,18 @@
         const USDT_POLYGON = '0xc2132D05D31c914a87C6611C10748AEb04B58e8F';
         const USDT_SOLANA = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
 
+        // 💜 Google Sheets Configuration
+        const SHEETS = {
+          NWC_SHEET_ID: '1D1AmH676-RdnBbE9F0i0E5lNvv0y5VZlnQZ_eL5dx1Q',
+          NWC_API_KEY: 'AIzaSyBin_r5W1VlRYa-2P3lRq5MWP2_ctd_R3c',
+          NWC_MERCHANTS: 'MERCHANTS!A:G',
+          NWC_PAYMENTS: 'PAYMENTS!A:H'
+        };
+
+// DEFAULT WALLET ADDRESSES...
+
+        
+
         // DEFAULT WALLET ADDRESSES (can be changed in settings)
         const DEFAULT_POLYGON_WALLET = '';
         const DEFAULT_SOLANA_WALLET = '';
@@ -1074,6 +1236,319 @@
             verifying: false,
             previousSection: 1
         };
+
+        // 💜 Payment Gateway Mode
+        const GATEWAY = {
+          merchantId: null,
+          amount: null,
+          returnUrl: null,
+          isGatewayMode: false,
+        };
+
+        
+
+        // ═════════════════════════════════════════
+        // 💜 GATEWAY MODE FUNCTIONS
+        // ═════════════════════════════════════════
+
+function detectGatewayMode() {
+  const params = new URLSearchParams(window.location.search);
+  const merchantId = params.get('merchant');
+  const amount = params.get('amount');
+  const network = params.get('network') || 'polygon';
+
+  if (!merchantId) {
+    return false;
+  }
+
+  if (!amount) {
+    showMerchantError('This payment link is no longer valid or the merchant ID doesn\'t exist.');
+    return false;
+  }
+
+  if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+    showMerchantError('This payment link is no longer valid or the merchant ID doesn\'t exist.');
+    return false;
+  }
+
+  GATEWAY.merchantId = merchantId;
+  GATEWAY.amount = parseFloat(amount);
+  GATEWAY.isGatewayMode = true;  // ✅ Don't set returnUrl here
+  console.log('🎯 GATEWAY MODE DETECTED', GATEWAY);
+  loadMerchantForGateway(merchantId, GATEWAY.amount, network);
+  return true;
+}
+
+
+// Modern error display
+function showMerchantError(message) {
+  const container = document.querySelector('.container');
+  
+  container.innerHTML = `
+    <div class="card" style="text-align: center; padding: 60px 32px;">
+      <div style="font-size: 4rem; margin-bottom: 24px;">❌</div>
+      
+      <h1 style="font-size: 1.8rem; margin-bottom: 12px; background: none; -webkit-text-fill-color: unset; color: #ef4444;">
+        Payment Link Invalid
+      </h1>
+      
+      <p style="color: var(--muted); font-size: 1.1rem; margin-bottom: 32px; line-height: 1.6;">
+        ${message}
+      </p>
+      
+      <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 20px;">
+        <p style="color: var(--muted); font-size: 0.9rem;">
+          💡 Contact the merchant for a valid payment link.
+        </p>
+      </div>
+      
+      <p style="color: var(--muted); font-size: 0.85rem; margin-top: 40px;">
+        Powered by NoWalletConnect
+      </p>
+    </div>
+  `;
+}
+
+async function loadMerchantForGateway(merchantId, amount, network) {
+  try {
+    const merchants = await fetchMerchants();
+    const merchant = merchants[merchantId];
+
+    if (!merchant) {
+      showMerchantError('This payment link is no longer valid or the merchant ID doesn\'t exist.');
+      return;
+    }
+
+    // ✅ Get return URL from Google Sheet
+    GATEWAY.returnUrl = merchant.webhookUrl;  // ✅ Uses column 6 from database
+    GATEWAY.merchantId = merchantId;
+    GATEWAY.amount = amount;
+    GATEWAY.isGatewayMode = true;
+
+    // ✅ Use network from URL
+    state.network = network;
+    state.walletAddress = network === 'polygon' ? merchant.polygonWallet : merchant.solanaWallet;
+    
+    // ✅ UPDATE UI WITH NETWORK INFO
+    updatePaymentNetwork();
+
+
+    console.log('✅ Merchant loaded:', merchant);
+    state.merchantId = merchantId;
+    state.expectedAmount = amount;
+    state.polygonWallet = merchant.polygonWallet;
+    state.solanaWallet = merchant.solanaWallet;
+
+    // Update UI
+    document.getElementById('expectedAmount').value = amount;
+    document.getElementById('expectedAmount').disabled = true;
+
+    // Regenerate QR code with correct wallet for network
+    generateQRCode(state.walletAddress);
+
+    const showSenderText = document.getElementById('showSenderText');
+    if (showSenderText) {
+      showSenderText.textContent = 'Complete your payment below';
+      showSenderText.style.display = 'block';
+    }
+
+    const addressLabel = document.getElementById('addressLabel');
+    if (addressLabel) {
+      addressLabel.textContent = 'Send USDT to:';
+      addressLabel.style.display = 'block';
+    }
+
+    // Hide buttons in gateway mode
+    const settingsBtn = document.querySelector('.settings-btn');
+    if (settingsBtn) {
+      settingsBtn.style.display = 'none';
+    }
+
+    const changeNetworkBtn = document.querySelector('button[onclick*="goBack"]');
+    if (changeNetworkBtn) {
+      changeNetworkBtn.style.display = 'none';
+    }
+
+    goToSection(2);
+    
+    // ✅ Wait a moment then start verification
+    setTimeout(() => {
+      startAutoVerification();
+    }, 500);
+
+  } catch (err) {
+    console.error('Error loading merchant:', err);
+    alert('❌ Error loading merchant');
+  }
+}
+
+        // Redirect to merchant after payment
+        function redirectToMerchant(txHash) {
+          if (!GATEWAY.isGatewayMode || !GATEWAY.returnUrl) return;
+
+          const redirectUrl = new URL(GATEWAY.returnUrl);
+          redirectUrl.searchParams.append('payment_id', 'pay_' + Date.now());
+          redirectUrl.searchParams.append('tx_hash', txHash);
+          redirectUrl.searchParams.append('amount', GATEWAY.amount);
+          redirectUrl.searchParams.append('merchant', GATEWAY.merchantId);
+          redirectUrl.searchParams.append('network', state.network);
+          redirectUrl.searchParams.append('status', 'success');
+
+          console.log('🔄 Redirecting to merchant:', redirectUrl.toString());
+          setTimeout(() => { window.location.href = redirectUrl.toString(); }, 3000);
+        }
+
+async function recordPaymentToSheet(paymentData) {
+  try {
+    console.log('📝 Recording payment:', paymentData);
+
+    // ✅ CORRECT Format
+    const formUrl = 'https://docs.google.com/forms/d/14seQRN5oWOxqlYGJnaOvMQl6aGW02DFMupP2WRai66A/formResponse';
+
+    const formData = new FormData();
+    formData.append('entry.1529556014', 'completed');                              // status
+    formData.append('entry.1426755421', paymentData.payment_id || 'pay_' + Date.now());  // payment_id
+    formData.append('entry.129872802', paymentData.merchant_id || '');             // merchant_id
+    formData.append('entry.654384322', paymentData.amount);                        // amount
+    formData.append('entry.187968983', paymentData.tx_hash);                       // tx_hash
+    formData.append('entry.481009506', paymentData.network || 'polygon');          // network
+    formData.append('entry.475850415', paymentData.return_url || '');              // return_url
+
+    console.log('📤 Sending to form...');
+
+    await fetch(formUrl, {
+      method: 'POST',
+      body: formData,
+      mode: 'no-cors'
+    });
+
+    console.log('✅ Payment recorded to Google Form!');
+    return { success: true };
+  } catch (err) {
+    console.error('❌ Error:', err);
+  }
+}
+
+async function fetchPayments() {
+  try {
+    // ✅ NEW Database ID for PAYMENTS
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/1W6r8bcMl41HvYF2PJ0OyEicg11bcv1DjGNkQMSH85qw/values/'PAYMENTS'!A:H?key=${SHEETS.NWC_API_KEY}`;
+    
+    console.log('📥 Fetching from:', url);
+    
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (!data.values) return [];
+
+    const payments = [];
+    const rows = data.values.slice(1);
+
+    for (const row of rows) {
+      if (!row[2]) continue;
+      payments.push({
+        timestamp: row[0],
+        status: row[1],
+        payment_id: row[2],
+        merchant_id: row[3],
+        amount: row[4],
+        tx_hash: row[5],
+        network: row[6],
+        return_url: row[7],
+      });
+    }
+
+    return payments;
+  } catch (err) {
+    console.error('❌ Error fetching payments:', err);
+    return [];
+  }
+}
+
+async function fetchMerchants() {
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEETS.NWC_SHEET_ID}/values/${SHEETS.NWC_MERCHANTS}?key=${SHEETS.NWC_API_KEY}`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (!data.values || data.values.length < 2) return {};
+
+    const merchants = {};
+    const rows = data.values.slice(1);
+
+    for (const row of rows) {
+      // Your database order:
+      // [0]=created_at, [1]=merchant_id, [2]=name, [3]=polygon_wallet, 
+      // [4]=solana_wallet, [5]=email, [6]=webhook_url
+      
+      const merchantId = row[1];
+      if (!merchantId) continue;
+      
+      merchants[merchantId] = {
+        id: row[1],              // ✅ merchant_id
+        name: row[2] || '',      // ✅ name
+        polygonWallet: row[3] || '',    // ✅ polygon_wallet
+        solanaWallet: row[4] || '',     // ✅ solana_wallet
+        email: row[5] || '',     // ✅ email
+        webhookUrl: row[6] || '',       // ✅ webhook_url
+      };
+    }
+
+    return merchants;
+  } catch (err) {
+    console.error('❌ Error fetching merchants:', err);
+    return {};
+  }
+}
+
+// ✅ Redirect countdown timer
+function startRedirectCountdown() {
+  let seconds = 10;
+  
+  const timerDiv = document.getElementById('redirectTimer');
+  const countdownEl = document.getElementById('redirectCountdown');
+  const acceptBtn = document.getElementById('acceptAnotherBtn');
+  const returnBtn = document.getElementById('returnMerchantBtn');
+  
+  if (!timerDiv) return;
+  
+  // Show timer, hide normal button
+  timerDiv.style.display = 'block';
+  if (acceptBtn) acceptBtn.style.display = 'none';
+  if (returnBtn) returnBtn.style.display = 'block';
+  
+  const interval = setInterval(() => {
+    countdownEl.textContent = seconds;
+    
+    if (seconds <= 0) {
+      clearInterval(interval);
+      returnToMerchant();
+    }
+    
+    seconds--;
+  }, 1000);
+}
+
+// ✅ Return to merchant website
+function returnToMerchant() {
+  if (!GATEWAY.returnUrl) return;
+
+  const txLink = document.getElementById("txLink");
+  const txHash = (txLink && (txLink.title || txLink.textContent)) || "";
+
+  try {
+    const url = new URL(GATEWAY.returnUrl);
+    url.searchParams.set("payment_id", "pay_" + Date.now());
+    url.searchParams.set("tx_hash", txHash);
+    url.searchParams.set("amount", String(GATEWAY.amount || state.expectedAmount || ""));
+    url.searchParams.set("merchant", GATEWAY.merchantId || "");
+    url.searchParams.set("network", state.network || "");
+    url.searchParams.set("status", "success");
+    window.location.href = url.toString();
+  } catch (e) {
+    window.location.href = GATEWAY.returnUrl;
+  }
+}
 
         function loadFromLocalStorage() {
             const savedPolygon = localStorage.getItem('polygonWallet');
@@ -1281,8 +1756,30 @@ function formatCountdown(ms) {
 }
 
 function setCountdownText(text) {
-    const el = document.getElementById("watchCountdown");
-    if (el) el.textContent = text;
+    const wrap = document.getElementById("watchCountdown");
+    const textEl = document.getElementById("watchCountdownText");
+    const bar = document.getElementById("watchCountdownBar");
+    const el2 = document.getElementById("watchCountdown3");
+
+    const left = Math.max(0, (state.watchEndsAt || 0) - Date.now());
+    const urgent = left <= 5 * 60 * 1000 && left > 0;
+    const clock = text ? formatCountdown(left) : "";
+
+    if (wrap) {
+        if (!text) {
+            wrap.classList.add("hidden");
+        } else {
+            wrap.classList.remove("hidden");
+            wrap.classList.toggle("urgent", urgent);
+            if (textEl) textEl.textContent = clock;
+            if (bar) bar.style.transform = "scaleX(" + (left / WATCH_MS) + ")";
+        }
+    }
+
+    if (el2) {
+        el2.textContent = text ? ("⏱️ " + clock) : "";
+        el2.style.color = urgent ? "#ff6b6b" : "var(--primary)";
+    }
 }
 
 function startCountdown() {
@@ -1292,76 +1789,56 @@ function startCountdown() {
         const left = (state.watchEndsAt || 0) - Date.now();
         if (left <= 0) {
             stopVerification();
-            setWatchStatus("This checkout timed out");
-            setCountdownText("Tap Check again to keep waiting");
+            setWatchStatus("⏰ Payment expired");
+            setCountdownText("");
+            showExpiredPayment();
             return;
         }
-        setCountdownText("Time left " + formatCountdown(left));
+        setCountdownText("⏱️ Payment expires in " + formatCountdown(left));
     }
 
     tick();
     state.countdownTimer = setInterval(tick, 1000);
 }
 
-function startWatchingFromCheckout() {
-    const isUsingDefaults =
-        state.polygonWallet === DEFAULT_POLYGON_WALLET &&
-        state.solanaWallet === DEFAULT_SOLANA_WALLET;
-
-    if (isUsingDefaults || !state.walletAddress) {
-        setWatchStatus("Add your wallet in Settings first");
-        setCountdownText("");
-        return;
-    }
-
-    const amount = parseFloat(document.getElementById("expectedAmount").value);
-    if (!amount || amount <= 0) {
-        setWatchStatus("Enter how much they should send");
-        setCountdownText("");
-        return;
-    }
-
-    state.expectedAmount = amount;
-    setWatchStatus("Waiting for the sender to pay");
-    startAutoVerification();
-}
-
-async function startAutoVerification() {
-    stopVerification();
-
-    if (!state.walletAddress || !state.expectedAmount) return;
-
-    state.verifying = true;
-    state.watchStartedAt = Date.now() - 30 * 60 * 1000;
-    state.watchEndsAt = Date.now() + WATCH_MS;
-    startCountdown();
-
-    async function check() {
-        if (Date.now() >= state.watchEndsAt) return;
-
-        try {
-            const url =
-                `${API}/verify?network=${encodeURIComponent(state.network)}` +
-                `&address=${encodeURIComponent(state.walletAddress)}` +
-                `&amount=${encodeURIComponent(state.expectedAmount)}` +
-                `&since=${state.watchStartedAt}`;
-
-            const result = await (await fetch(url)).json();
-            console.log("verify result", result);
-
-            if (result.paid && result.tx) {
-                stopVerification();
-                setCountdownText("");
-                showSuccess(result.tx);
-            }
-        } catch (e) {
-            console.error(e);
-            setWatchStatus("Can't check the payment right now");
+function showExpiredPayment() {
+    const watchStatus = document.getElementById("watchStatus");
+    if (watchStatus) {
+        // ONLY for merchant gateway mode
+        if (GATEWAY.isGatewayMode) {
+            watchStatus.innerHTML = `
+                <div style="text-align: center;">
+                    <div style="font-size: 2rem; margin-bottom: 12px;">⏰</div>
+                    <div style="font-size: 1.1rem; font-weight: 600; color: #ff6b6b; margin-bottom: 8px;">
+                        Payment Expired
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--muted); margin-bottom: 16px;">
+                        This payment request has expired. Returning to merchant...
+                    </div>
+                </div>
+            `;
+            // Auto redirect back to merchant
+            setTimeout(() => {
+                window.location.href = GATEWAY.returnUrl || window.history.back();
+            }, 2000);
+        } else {
+            // NORMAL CHECKOUT - keep original behavior (Generate New Payment)
+            watchStatus.innerHTML = `
+                <div style="text-align: center;">
+                    <div style="font-size: 2rem; margin-bottom: 12px;">⏰</div>
+                    <div style="font-size: 1.1rem; font-weight: 600; color: #ff6b6b; margin-bottom: 8px;">
+                        Payment Expired
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--muted); margin-bottom: 16px;">
+                        Generate a new payment to continue
+                    </div>
+                    <button onclick="goBack()" style="padding: 12px 24px; background: var(--primary); color: #0f1419; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        Generate New Payment
+                    </button>
+                </div>
+            `;
         }
     }
-
-    check();
-    state.verifyTimer = setInterval(check, 5000);
 }
 
 function setWatchStatus(text) {
@@ -1376,17 +1853,19 @@ function startWatchingFromCheckout() {
 
     if (isUsingDefaults || !state.walletAddress) {
         setWatchStatus("Add your wallet in Settings first");
+        setCountdownText("");
         return;
     }
 
     const amount = parseFloat(document.getElementById("expectedAmount").value);
     if (!amount || amount <= 0) {
         setWatchStatus("Enter how much they should send");
+        setCountdownText("");
         return;
     }
 
     state.expectedAmount = amount;
-    setWatchStatus("Waiting for the sender to pay");
+    setWatchStatus("Awaiting your payment...");
     startAutoVerification();
 }
 
@@ -1397,11 +1876,21 @@ async function startAutoVerification() {
 
     state.verifying = true;
     state.watchStartedAt = Date.now() - 30 * 60 * 1000;
+    state.watchEndsAt = Date.now() + WATCH_MS;
+    startCountdown();
 
+    const maxAttempts = Math.ceil(WATCH_MS / 5000);
     let attempts = 0;
-    const maxAttempts = 36;
 
     async function check() {
+        if (Date.now() >= state.watchEndsAt) {
+            stopVerification();
+            setWatchStatus("⏰ Payment expired");
+            setCountdownText("");
+            showExpiredPayment();
+            return;
+        }
+
         attempts++;
         try {
             const url =
@@ -1415,10 +1904,11 @@ async function startAutoVerification() {
 
             if (result.paid && result.tx) {
                 stopVerification();
+                setCountdownText("");
                 showSuccess(result.tx);
                 return;
             }
-            setWatchStatus("Waiting for the sender to pay");
+            setWatchStatus("Awaiting your payment...");
         } catch (e) {
             console.error(e);
             setWatchStatus("Can't check the payment right now");
@@ -1434,25 +1924,46 @@ async function startAutoVerification() {
     state.verifyTimer = setInterval(check, 5000);
 }
 
-        function showSuccess(txHash) {
-            console.log('showSuccess called with txHash:', txHash);
-            
-            // Display amount
-            document.getElementById('finalAmount').textContent = state.expectedAmount + ' USDT';
-            
-            // Display transaction hash with explorer link
-            const explorerUrl = state.network === 'polygon'
-                ? `https://polygonscan.com/tx/${txHash}`
-                : `https://solscan.io/tx/${txHash}`;
-            
-            const txLink = document.getElementById('txLink');
-            txLink.href = explorerUrl;
-            txLink.textContent = txHash.substring(0, 20) + '...';
-            txLink.title = txHash;
-            
-            console.log('Explorer URL:', explorerUrl);
-            goToSection(4);
-        }
+async function showSuccess(txHash) {
+  console.log('showSuccess called with txHash:', txHash);
+  
+  // Display amount
+  document.getElementById('finalAmount').textContent = state.expectedAmount + ' USDT';
+  
+  // Display transaction hash with explorer link
+  const explorerUrl = state.network === 'polygon'
+    ? `https://polygonscan.com/tx/${txHash}`
+    : `https://solscan.io/tx/${txHash}`;
+  
+  const txLink = document.getElementById('txLink');
+  txLink.href = explorerUrl;
+  txLink.textContent = txHash.substring(0, 20) + '...';
+  txLink.title = txHash;
+  
+  console.log('Explorer URL:', explorerUrl);
+
+  // ✅ RECORD PAYMENT TO DATABASE
+  try {
+    const recorded = await recordPaymentToSheet({
+      payment_id: 'pay_' + Date.now(),
+      merchant_id: GATEWAY.merchantId || state.merchantId || '',
+      amount: state.expectedAmount,
+      tx_hash: txHash,
+      network: state.network,
+      return_url: GATEWAY.returnUrl || '',
+    });
+    console.log('✅ Payment recorded to database:', recorded);
+  } catch (e) {
+    console.error('❌ Database error:', e);
+  }
+
+  goToSection(4);
+  
+  // Start redirect countdown
+  if (GATEWAY.isGatewayMode) {
+    startRedirectCountdown();
+  }
+}
 
         function goToSetup() {
             goToSection(1);
@@ -1639,9 +2150,17 @@ function closeSettings() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-loadFromLocalStorage();
-loadFromCookies();
-updatePaymentNetwork();
+// Initialize
+window.addEventListener('load', () => {
+  if (!detectGatewayMode()) {
+    loadFromLocalStorage();
+    loadFromCookies();
+    updatePaymentNetwork();
+  } else {
+    const footer = document.getElementById('siteFooter');
+    if (footer) footer.classList.add('hidden');
+  }
+});
     </script>
 </body>
 </html>

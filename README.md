@@ -1,109 +1,184 @@
 # NoWalletConnect
 
-A simple **USDT receive screen**. You open it. The sender pays from their own wallet. No WalletConnect popup, no browser extension on your side.
+Accept USDT payments without a wallet-connect popup.
 
-**Live:** [https://solacediamond.github.io/nowalletconnect/](https://solacediamond.github.io/nowalletconnect/)
+The customer opens a merchant link, fills only the fields you did not lock, scans a QR or copies an address, and sends USDT. NoWalletConnect watches the chain, marks the payment received, and can send the buyer back to your site.
 
----
+## How it works
 
-## What it does
+```
+Merchant website
+        ↓
+pay.html?merchant=ID[&amount=X][&network=Y]
+        ↓
+Locked fields stay fixed. Missing fields are filled by the customer.
+        ↓
+Payment page shows receive address + QR
+        ↓
+Customer sends exact USDT amount
+        ↓
+Verifier checks the chain
+        ↓
+Success screen + explorer link
+        ↓
+Redirect to merchant return URL
+```
 
-1. You save your Polygon and/or Solana receive address in Settings.
-2. You pick the network and type the exact USDT amount.
-3. You show the QR (raw address) or copy the address.
-4. The sender sends **USDT on that same network**, exact amount.
-5. The page asks a Cloudflare Worker every 5 seconds. When a matching incoming transfer is found, you get **Payment received** and an explorer link.
-
-The sender never uses this website.
+1. Each merchant has an ID, email, payout wallets, and a return URL in the database.
+2. The public link always contains the merchant ID.
+3. `amount` and `network` are optional. If they are in the URL, those controls are locked.
+4. The customer never connects a wallet to the site.
+5. Funds go directly to the merchant’s Polygon or Solana address.
 
 ## Networks
 
-| Network | Token | Notes |
-| --- | --- | --- |
-| Polygon | USDT (ERC-20) | Cheap, usually seconds to ~30s |
-| Solana | USDT (SPL) | Cheap, usually seconds |
+| Network | Token |
+|---|---|
+| Polygon | USDT (ERC-20) |
+| Solana | USDT (SPL) |
 
-Wrong network or native coin (POL / SOL) is not detected and can be lost.
+Send USDT on the selected network only. The wrong network can mean a lost payment.
 
-## How verification works
+## Pages
 
-The static page calls:
+| File | Role |
+|---|---|
+| `pay.html` | Customer amount + network screen. Requires `?merchant=YOUR_ID`. Locks any extra params in the URL. |
+| Payment page | QR, receive address, 15-minute wait, success, return redirect. |
+| `merchant.html` | Merchant dashboard. Sign in with **merchant ID + email**. |
+| `guide.html` | Copy-paste Pay button and success-return snippet. |
 
-`https://nowalletconnect-api.lightunuovo.workers.dev/verify`
+## Payment links
 
-A payment is treated as paid only if:
+Base:
 
-- it went to the address in Settings
-- it is USDT on the selected network
-- the amount matches within **0.01 USDT**
-- it is inside the look-back window (about **30 minutes**)
-
-Checkout watches for **15 minutes**. **Check again** starts a new window. API keys live in Cloudflare Secrets Store, not in this repo.
-
-## Quick start (receiver)
-
-1. Open the live URL above (not a random `file://` copy, unless you allowed that origin on the Worker).
-2. Settings (bottom-right) → paste addresses → Save.
-3. Choose Polygon or Solana → Continue.
-4. Type the amount they should send.
-5. Show QR / copy address. Stay on that screen.
-
-Test with a tiny amount to yourself on each network before taking real payments.
-
-## What to tell the sender
-
-> Scan or copy → **USDT only** → same network as the screen → **exact amount**.
-
-If their wallet cannot scan the QR, they paste the address and pick the token themselves.
-
-## Limits (read this)
-
-- This is a live detector, not a cash register. No invoices, refunds, or payment history.
-- The QR is the address only. It does not lock USDT or the amount.
-- Two people sending the **same amount** to the same wallet in the same window can look like one payment. Use a different amount for the next sale.
-- Addresses are stored in **this browser** (`localStorage`). Another device or a cleared cache means you paste them again.
-- The green screen is not legal proof by itself. Open the explorer link.
-
-## Repo layout
-
-Typical Pages site:
-
-```text
-index.html          # the app
-polygon.png
-solana.png
-nwc.jpg             # favicon
-README.md
+```
+https://solacediamond.github.io/nowalletconnect/pay.html?merchant=YOUR_ID
 ```
 
-The Worker is a separate Cloudflare Worker (`nowalletconnect-api`), not this static folder.
+| Link | Amount | Network |
+|---|---|---|
+| `?merchant=NWC` | Customer types it | Customer picks it |
+| `?merchant=NWC&amount=49.99` | Locked at 49.99 | Customer picks it |
+| `?merchant=NWC&network=solana` | Customer types it | Locked to Solana |
+| `?merchant=NWC&amount=49.99&network=polygon` | Locked | Locked |
 
-## Worker
+Proceed continues to the payment page with:
 
-`GET /verify?network=polygon|solana&address=...&amount=...&since=...`
-
-Returns JSON:
-
-```json
-{ "paid": true, "tx": "0x...", "explorer": "https://..." }
+```
+?merchant=YOUR_ID&amount=49.99&network=polygon
 ```
 
-or `{ "paid": false }`.
+## Embed on a website
 
-Secrets Store bindings:
+Price locked, network open:
 
-- `ETHERSCAN` → Etherscan API key (Polygon via chainid 137)
-- `HELIUS` → Helius API key (Solana)
+```html
+<div style="display:inline-block;text-align:center;">
+  <a href="https://solacediamond.github.io/nowalletconnect/pay.html?merchant=MERCHANT_ID&amount=49.99" style="text-decoration:none;">
+    <button style="padding:12px 24px;background:linear-gradient(135deg,#00d4ff,#7c3aed);color:#0f1419;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:16px;">
+      Pay 49.99 USDT
+    </button>
+  </a>
+  <div style="margin-top:8px;font-size:11px;font-family:sans-serif;">
+    <a href="https://solacediamond.github.io/nowalletconnect/" style="color:#94a3b8;text-decoration:none;">Powered by NoWalletConnect</a>
+  </div>
+</div>
+```
 
-CORS should allow at least:
+Change the button text, colors, and size if you want. Keep `merchant` in the href. Add `amount` and `network` only when you want those values locked. Keep the Powered by line.
 
-- `https://solacediamond.github.io`
-- optional local origins such as `http://127.0.0.1:5500` for Live Server
+## Success return
 
-## Local preview
+After a confirmed payment, checkout redirects to the **webhook / return URL** saved on the merchant row:
 
-Serve `index.html` over `http://localhost` or `http://127.0.0.1` (not as a raw file) and keep that origin on the Worker allow-list. GitHub Pages is the supported setup.
+```
+https://yoursite.com/order-complete?status=success&amount=49.99&tx_hash=0x…&merchant=NWC&network=polygon&payment_id=pay_123
+```
+
+Read it:
+
+```js
+const q = new URLSearchParams(location.search);
+if (q.get("status") === "success" && q.get("merchant") === "MERCHANT_ID") {
+  const paid = parseFloat(q.get("amount"));
+  const tx = q.get("tx_hash");
+  const network = q.get("network");
+}
+```
+
+The return URL is not passed in the payment link. Set it on the merchant record.
+
+## Merchant dashboard
+
+Sign in with:
+
+- merchant ID
+- email on file
+
+No password. Both values must match the same database row.
+
+The dashboard shows:
+
+- checkout / pay link
+- wallets on file
+- volume, payment count, average, largest payment
+- Polygon vs Solana split
+- last 7 days
+- searchable history and CSV export
+
+History only lists payments whose merchant ID matches the signed-in account.
+
+## Database fields
+
+**Merchants**
+
+| Field | Used for |
+|---|---|
+| Merchant ID | Public payment handle and login |
+| Business name | Dashboard label |
+| Polygon wallet | Receive address |
+| Solana wallet | Receive address |
+| Email | Login (must match ID) |
+| Webhook URL | Success return page |
+
+**Payments**
+
+| Field | Used for |
+|---|---|
+| Date | History and 7-day trend |
+| Merchant ID | Filter dashboard rows |
+| Amount | Analytics |
+| Transaction hash | Explorer link |
+| Network | Polygon / Solana split |
+
+## Customer payment flow
+
+1. Open the merchant payment link.
+2. Fill any unlocked amount or network field.
+3. Send **only USDT** on that network to the shown address.
+4. Wait for confirmation. Use **Check again** if needed.
+5. Payment window expires after 15 minutes if nothing arrives.
+6. On success, the buyer is sent back to the merchant return URL.
+
+## Pricing
+
+- $0.25 one-time setup
+- No monthly fee
+- No per-transaction fee from NoWalletConnect
+- Merchant keeps 100% of received USDT (network gas is paid by the sender)
+
+## What this is not
+
+- Not MetaMask / Phantom WalletConnect
+- Not a custodian — payouts go to the merchant wallet
+- Not a place to send the wrong token or the wrong chain
+
+## Support
+
+- Telegram: [t.me/noWalletConnect](https://t.me/noWalletConnect)
+- Docs: [NoWalletConnect-Docs.pdf](https://github.com/solacediamond/nowalletconnect/blob/main/NoWalletConnect-Docs.pdf)
 
 ## License
 
-Use and modify for your own receive flow. You are responsible for telling senders the correct network and token.
+Use with a valid merchant ID issued by NoWalletConnect.
