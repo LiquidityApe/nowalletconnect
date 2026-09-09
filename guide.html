@@ -207,6 +207,35 @@
         .price-label { color: #94a3b8; font-size: 0.85rem; }
         .price-note { color: #94a3b8; font-size: 0.9rem; }
 
+        .ai-row { display: grid; grid-template-columns: 1fr 140px; gap: 10px; margin: 12px 0 8px; }
+        .ai-row input, .ai-amount {
+            width: 100%; padding: 12px 14px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 2px solid rgba(148, 163, 184, 0.12);
+            border-radius: 10px; color: #f1f5f9; font-size: 1rem; font-family: inherit;
+        }
+        .ai-row input:focus, .ai-amount:focus { outline: none; border-color: #00d4ff; }
+        .ai-gen {
+            border: none; border-radius: 10px; font-weight: 700; cursor: pointer;
+            background: linear-gradient(135deg, #00d4ff, #7c3aed); color: #0f1419;
+        }
+
+
+        .pay-setup {
+            display: inline-block;
+            margin-top: 16px;
+            padding: 12px 22px;
+            background: linear-gradient(135deg, #00d4ff, #7c3aed);
+            color: #0f1419 !important;
+            text-decoration: none !important;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        .pay-setup:hover { text-decoration: none !important; opacity: 0.92; }
+        .pay-setup-wrap { text-align: center; margin-top: 8px; }
+
+
         .table-wrap {
             width: 100%;
             overflow-x: auto;
@@ -322,6 +351,7 @@
             .step-desc { font-size: 0.92rem; }
             .pricing-box { padding: 16px; }
             .pricing-grid { grid-template-columns: 1fr; gap: 12px; }
+            .ai-row { grid-template-columns: 1fr; }
             .price { font-size: 1.6rem; }
             .inline-code { display: block; width: 100%; font-size: 0.75rem; }
             .code-block { padding: 14px 12px; }
@@ -386,6 +416,33 @@
             </div>
         </div>
 
+        
+        <div class="card">
+            <h2>Give this to an AI</h2>
+            <p class="step-desc">
+                Enter your merchant ID. The brief below is filled in for you.
+                Copy it and paste it into ChatGPT, Claude, Cursor, or any coding AI.
+            </p>
+            <div class="ai-row">
+                <input id="aiMerchantId" type="text" placeholder="Your merchant ID e.g. NWC" spellcheck="false" oninput="renderAiBrief()">
+                <button class="ai-gen" type="button" onclick="renderAiBrief()">Generate</button>
+            </div>
+            <p class="step-desc" style="margin-top:12px;">Optional package price (leave empty if the customer should type the amount):</p>
+            <input class="ai-amount" id="aiAmount" type="text" placeholder="e.g. 49.99" spellcheck="false" oninput="renderAiBrief()">
+            <div class="code-block">
+                <button class="copy-btn" type="button" onclick="copyFrom(this)" aria-label="Copy code" title="Copy">
+                    <svg class="icon-copy" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    <svg class="icon-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" hidden>
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </button>
+                <pre id="aiBrief">Enter your merchant ID to generate the AI brief.</pre>
+            </div>
+        </div>
+
         <div class="card">
             <h2>How to Get Started</h2>
 
@@ -393,10 +450,10 @@
                 <div class="step-number">1</div>
                 <div class="step-title">Get Your Merchant ID</div>
                 <div class="step-desc">
-                    Register and get your unique merchant ID (for example, <span class="highlight">NWC</span>).
-                    Save your Polygon wallet, Solana wallet, and a return URL such as
-                    <code class="inline-code">https://yoursite.com/order-complete</code>.
-                    After payment, the buyer is sent back to that URL with success parameters.
+                    Create your account on the
+                    <a href="merchant.html">merchant page</a>.
+                    New merchants pay a <span class="highlight">$0.25</span> setup fee there, then save wallets and a return URL
+                    such as <code class="inline-code">https://yoursite.com/order-complete</code>.
                 </div>
             </div>
 
@@ -606,7 +663,7 @@ if (q.get("status") === "success" && q.get("merchant") === "MERCHANT_ID") {
                     <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </div>
                 <div class="faq-answer">
-                    $0.25 one-time setup. No monthly fee. No transaction fees. You keep 100% of every payment.
+                    $0.25 one-time setup, paid on the merchant registration page. No monthly fee and no transaction fees. You keep 100% of every payment.
                 </div>
             </div>
 
@@ -670,6 +727,69 @@ if (q.get("status") === "success" && q.get("merchant") === "MERCHANT_ID") {
             });
         }
 
+
+        function renderAiBrief() {
+            const id = (document.getElementById("aiMerchantId").value || "").trim() || "YOUR_MERCHANT_ID";
+            const rawAmt = (document.getElementById("aiAmount").value || "").trim();
+            const amount = rawAmt && !Number.isNaN(parseFloat(rawAmt)) ? String(parseFloat(rawAmt)) : "";
+            const pay = "https://solacediamond.github.io/nowalletconnect/pay.html";
+            const link = amount ? (pay + "?merchant=" + id + "&amount=" + amount) : (pay + "?merchant=" + id);
+            const el = document.getElementById("aiBrief");
+            if (!el) return;
+            el.textContent = `Integrate NoWalletConnect USDT checkout into my site.
+
+WHAT IT IS
+NoWalletConnect lets a customer pay USDT on Polygon or Solana without connecting a wallet to my site. They open a payment link, send USDT to my receive address, checkout verifies the transfer, then redirects back to my webhook URL.
+
+MY MERCHANT ID (do not change this):
+${id}
+
+PAYMENT URL TO USE
+${link}
+
+URL RULES
+- merchant is required. Mine is ${id}.
+- amount is optional. If present, lock the amount field. If missing, let the customer type it.
+- network is optional (polygon or solana). If present, lock it. If missing, let the customer choose.
+- Base host: https://solacediamond.github.io/nowalletconnect/pay.html
+
+ADD A PAY BUTTON
+Use this HTML. Keep the Powered by line.
+
+<div style="display:inline-block;text-align:center;">
+  <a href="${link}" style="text-decoration:none;">
+    <button style="padding:12px 24px;background:linear-gradient(135deg,#00d4ff,#7c3aed);color:#0f1419;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:16px;">
+      Pay${amount ? " " + amount + " USDT" : " with USDT"}
+    </button>
+  </a>
+  <div style="margin-top:8px;font-size:11px;font-family:sans-serif;">
+    <a href="https://solacediamond.github.io/nowalletconnect/" style="color:#94a3b8;text-decoration:none;">Powered by NoWalletConnect</a>
+  </div>
+</div>
+
+SUCCESS RETURN
+My merchant webhook URL (set in the NoWalletConnect dashboard) receives the buyer after payment:
+
+?status=success&amount=...&tx_hash=...&merchant=${id}&network=polygon|solana&payment_id=pay_...
+
+On my thank-you / order page, read it like this:
+
+const q = new URLSearchParams(location.search);
+if (q.get("status") === "success" && q.get("merchant") === "${id}") {
+  const paid = parseFloat(q.get("amount"));
+  const tx = q.get("tx_hash");
+  const network = q.get("network");
+  // mark the order paid / show thank you
+}
+
+WHAT YOU SHOULD BUILD
+1. Put the Pay button on the product or checkout page.
+2. Make sure my webhook page exists and reads those query params.
+3. Only treat the order as paid when merchant is ${id}${amount ? " and amount is " + amount : ""}.
+4. Do not invent another payment provider. Do not change the merchant ID.
+5. Customer must send USDT only on the selected network.`;
+        }
+
         function toggleFaq(element) {
             element.classList.toggle("open");
         }
@@ -683,6 +803,7 @@ if (q.get("status") === "success" && q.get("merchant") === "MERCHANT_ID") {
         backToTop.addEventListener("click", () => {
             window.scrollTo({ top: 0, behavior: "smooth" });
         });
+        renderAiBrief();
     </script>
 </body>
 </html>
