@@ -483,7 +483,7 @@
             try {
                 const user = await findMerchant(merchantId, email);
                 if (!user) {
-                    showError("loginError", "No row with that merchant ID and email.");
+                    showError("loginError", "No data with that merchant ID and email.");
                     return;
                 }
                 enterDashboard(user);
