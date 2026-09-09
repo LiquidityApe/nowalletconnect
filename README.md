@@ -163,8 +163,8 @@ History only lists payments whose merchant ID matches the signed-in account.
 
 ## Pricing
 
-- $1 one-time setup
-- $1 per month
+- $0.25 one-time setup
+- No monthly fee
 - No per-transaction fee from NoWalletConnect
 - Merchant keeps 100% of received USDT (network gas is paid by the sender)
 

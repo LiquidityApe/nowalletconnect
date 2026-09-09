@@ -820,6 +820,38 @@
             }
         }
 
+
+        .site-footer {
+            margin: 8px 0 28px;
+            padding: 18px 16px 22px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+        .site-footer-brand {
+            font-size: 0.78rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+        .site-footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px 18px;
+        }
+        .site-footer-links a {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .site-footer-links a:hover { text-decoration: underline; }
+        .site-footer.hidden { display: none; }
+        @media (max-width: 600px) {
+            .site-footer { margin-bottom: 80px; }
+        }
+
         @media (max-width: 600px) {
             .card {
                 padding: 20px;
@@ -1137,6 +1169,17 @@
     </button>
   </div>
 </div>
+
+
+    <footer class="site-footer" id="siteFooter">
+        <div class="site-footer-brand">NoWalletConnect</div>
+        <nav class="site-footer-links">
+            <a href="guide.html">Integration Guide</a>
+            <a href="merchant.html">Merchant Dashboard</a>
+            <a href="https://github.com/solacediamond/nowalletconnect/blob/main/NoWalletConnect-Docs.pdf" target="_blank" rel="noopener">Documentation</a>
+            <a href="https://t.me/noWalletConnect" target="_blank" rel="noopener">Telegram</a>
+        </nav>
+    </footer>
 
     <div class="toast" id="toast"></div>
 
@@ -2113,6 +2156,9 @@ window.addEventListener('load', () => {
     loadFromLocalStorage();
     loadFromCookies();
     updatePaymentNetwork();
+  } else {
+    const footer = document.getElementById('siteFooter');
+    if (footer) footer.classList.add('hidden');
   }
 });
     </script>

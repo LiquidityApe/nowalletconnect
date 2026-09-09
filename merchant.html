@@ -100,6 +100,20 @@
             display: none;
         }
         .error-message.show { display: block; }
+        .setup-box {
+            background: rgba(0, 212, 255, 0.06);
+            border: 1px solid rgba(0, 212, 255, 0.25);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .setup-box.paid {
+            background: rgba(16, 185, 129, 0.08);
+            border-color: rgba(16, 185, 129, 0.35);
+        }
+        .setup-title { font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+        .setup-box.paid .setup-title { color: #86efac; }
+        .setup-text { color: var(--muted); font-size: 0.88rem; line-height: 1.5; margin-bottom: 12px; }
         header { text-align: center; margin: 12px 0 28px; }
         h1 { font-size: 2.2rem; margin-bottom: 8px; }
         .card { padding: 28px; margin-bottom: 24px; }
@@ -212,6 +226,7 @@
         .toast.show { display: block; }
         @media (max-width: 800px) {
             .kpis, .split { grid-template-columns: 1fr 1fr; }
+            .auth-card { padding: 24px 18px; }
         }
     </style>
 </head>
@@ -240,33 +255,45 @@
         <div class="auth-container">
             <div class="auth-card">
                 <div class="auth-title">Create Merchant</div>
-                <div class="auth-subtitle">Submits to the merchant database.</div>
+                <div class="auth-subtitle">Pay $0.25 USDT, then submit your details.</div>
                 <div id="registerError" class="error-message"></div>
-                <div class="form-group">
-                    <label>Merchant ID</label>
-                    <input type="text" id="registerMerchantId" placeholder="NWC" spellcheck="false">
+
+                <div class="setup-box" id="setupBox">
+                    <div class="setup-title" id="setupTitle">Setup fee required</div>
+                    <div class="setup-text" id="setupText">
+                        New accounts cost 0.25 USDT. Pay with NoWalletConnect using merchant
+                        <strong style="color:#fbbf24">NWC</strong>. Amount is locked.
+                    </div>
+                    <button class="btn-primary" id="setupPayBtn" type="button" onclick="startSetupPayment()">Pay $0.25 USDT</button>
                 </div>
-                <div class="form-group">
-                    <label>Business Name</label>
-                    <input type="text" id="registerBusinessName" placeholder="My Store">
+
+                <div id="registerFields">
+                    <div class="form-group">
+                        <label>Merchant ID</label>
+                        <input type="text" id="registerMerchantId" placeholder="NWC" spellcheck="false">
+                    </div>
+                    <div class="form-group">
+                        <label>Business Name</label>
+                        <input type="text" id="registerBusinessName" placeholder="My Store">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="registerEmail" placeholder="owner@store.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Polygon Wallet</label>
+                        <input type="text" id="registerPolygonWallet" placeholder="0x..." spellcheck="false">
+                    </div>
+                    <div class="form-group">
+                        <label>Solana Wallet</label>
+                        <input type="text" id="registerSolanaWallet" placeholder="7dHb..." spellcheck="false">
+                    </div>
+                    <div class="form-group">
+                        <label>Webhook URL</label>
+                        <input type="url" id="registerWebhook" placeholder="https://yoursite.com/order-complete">
+                    </div>
+                    <button class="btn-primary" id="registerBtn" type="button" onclick="handleRegister()" disabled>Create Account</button>
                 </div>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="registerEmail" placeholder="owner@store.com">
-                </div>
-                <div class="form-group">
-                    <label>Polygon Wallet</label>
-                    <input type="text" id="registerPolygonWallet" placeholder="0x..." spellcheck="false">
-                </div>
-                <div class="form-group">
-                    <label>Solana Wallet</label>
-                    <input type="text" id="registerSolanaWallet" placeholder="7dHb..." spellcheck="false">
-                </div>
-                <div class="form-group">
-                    <label>Webhook URL</label>
-                    <input type="url" id="registerWebhook" placeholder="https://example.com">
-                </div>
-                <button class="btn-primary" id="registerBtn" type="button" onclick="handleRegister()">Create Account</button>
                 <div class="toggle-auth">Already a merchant? <a onclick="switchPage('login')">Sign in</a></div>
             </div>
         </div>
@@ -385,6 +412,12 @@
         };
         const CHECKOUT_URL = "https://solacediamond.github.io/nowalletconnect/checkout.html";
         const SESSION_KEY = "nwc_session";
+        const SETUP = {
+            merchant: "NWC",
+            amount: 0.25,
+            storageKey: "nwc_setup_paid",
+            payUrl: "https://solacediamond.github.io/nowalletconnect/checkout.html?merchant=NWC&amount=0.25"
+        };
 
         const FORM = {
             ACTION: "https://docs.google.com/forms/d/e/1FAIpQLSeqrx1nAnypgHDJRnlzqU5TRqvqQh4f08GMajSrQu1S3Drh1w/formResponse",
@@ -412,7 +445,10 @@
             document.getElementById("registerPage").classList.add("hidden");
             document.getElementById("dashboardPage").classList.add("hidden");
             if (page === "login") document.getElementById("loginPage").classList.remove("hidden");
-            if (page === "register") document.getElementById("registerPage").classList.remove("hidden");
+            if (page === "register") {
+                document.getElementById("registerPage").classList.remove("hidden");
+                updateSetupUI();
+            }
             if (page === "dashboard") document.getElementById("dashboardPage").classList.remove("hidden");
         }
 
@@ -429,6 +465,53 @@
             toast.textContent = message;
             toast.classList.add("show");
             setTimeout(() => toast.classList.remove("show"), 2500);
+        }
+
+        function setupPaid() {
+            return sessionStorage.getItem(SETUP.storageKey) === "1";
+        }
+
+        function markSetupPaid() {
+            sessionStorage.setItem(SETUP.storageKey, "1");
+            updateSetupUI();
+        }
+
+        function updateSetupUI() {
+            const paid = setupPaid();
+            const box = document.getElementById("setupBox");
+            const btn = document.getElementById("registerBtn");
+            const payBtn = document.getElementById("setupPayBtn");
+            box.classList.toggle("paid", paid);
+            document.getElementById("setupTitle").textContent = paid ? "Setup fee paid" : "Setup fee required";
+            document.getElementById("setupText").textContent = paid
+                ? "0.25 USDT received. Fill the form and create your merchant account."
+                : "New accounts cost 0.25 USDT, Pay with NoWalletConnect.";
+            payBtn.style.display = paid ? "none" : "block";
+            btn.disabled = !paid;
+        }
+
+        function startSetupPayment() {
+            sessionStorage.setItem("nwc_setup_pending", "1");
+            window.location.href = SETUP.payUrl;
+        }
+
+        function captureSetupReturn() {
+            const q = new URLSearchParams(location.search);
+            const status = (q.get("status") || "").toLowerCase();
+            const merchant = (q.get("merchant") || "").trim().toUpperCase();
+            const amount = parseFloat(q.get("amount"));
+            if (status === "success" && merchant === SETUP.merchant && !Number.isNaN(amount) && Math.abs(amount - SETUP.amount) < 0.001) {
+                markSetupPaid();
+                switchPage("register");
+                showToast("Setup fee paid");
+                history.replaceState({}, "", location.pathname + location.hash);
+                return true;
+            }
+            if (sessionStorage.getItem("nwc_setup_pending") === "1" && setupPaid()) {
+                switchPage("register");
+                return true;
+            }
+            return false;
         }
 
         async function fetchMerchantRows() {
@@ -548,6 +631,11 @@
         }
 
         async function handleRegister() {
+            if (!setupPaid()) {
+                showError("registerError", "Pay the $0.25 setup fee before creating an account.");
+                return;
+            }
+
             const merchantId = document.getElementById("registerMerchantId").value.trim();
             const businessName = document.getElementById("registerBusinessName").value.trim();
             const email = document.getElementById("registerEmail").value.trim();
@@ -556,11 +644,10 @@
             const webhook = document.getElementById("registerWebhook").value.trim();
             const btn = document.getElementById("registerBtn");
 
-            if (!merchantId || !email || !businessName || !polygonWallet || !solanaWallet) {
+            if (!merchantId || !email || !businessName || !polygonWallet || !solanaWallet || !webhook) {
                 showError("registerError", "All fields must be filled.");
                 return;
             }
-            const webhookUrl = webhook || "https://example.com";
 
             btn.disabled = true;
             btn.textContent = "Checking database...";
@@ -579,7 +666,7 @@
                     email,
                     polygonWallet,
                     solanaWallet,
-                    webhook: webhookUrl
+                    webhook
                 });
 
                 btn.textContent = "Waiting for database...";
@@ -595,12 +682,14 @@
                     return;
                 }
 
+                sessionStorage.removeItem(SETUP.storageKey);
+                sessionStorage.removeItem("nwc_setup_pending");
                 enterDashboard(user);
                 showToast("Account created");
             } catch (err) {
                 showError("registerError", err.message || "Database lookup failed.");
             } finally {
-                btn.disabled = false;
+                btn.disabled = !setupPaid();
                 btn.textContent = "Create Account";
             }
         }
@@ -758,6 +847,8 @@
         }
 
         (async function init() {
+            if (captureSetupReturn()) return;
+
             const raw = localStorage.getItem(SESSION_KEY);
             if (!raw) {
                 switchPage("login");

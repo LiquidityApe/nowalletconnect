@@ -181,6 +181,7 @@
             padding: 24px;
         }
 
+        .pricing-grid.single { grid-template-columns: 1fr; max-width: 320px; margin: 0 auto 16px; }
         .pricing-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -206,10 +207,17 @@
         .price-label { color: #94a3b8; font-size: 0.85rem; }
         .price-note { color: #94a3b8; font-size: 0.9rem; }
 
+        .table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-top: 12px;
+        }
+
         table.param {
             width: 100%;
+            min-width: 480px;
             border-collapse: collapse;
-            margin-top: 12px;
             font-size: 0.9rem;
         }
 
@@ -219,6 +227,7 @@
             padding: 10px 8px;
             border-bottom: 1px solid rgba(148, 163, 184, 0.12);
             color: #94a3b8;
+            vertical-align: top;
         }
 
         table.param th { color: #00d4ff; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
@@ -301,10 +310,56 @@
             transform: translateY(-2px);
         }
 
-        @media (max-width: 600px) {
-            .card { padding: 24px 18px; }
-            h1 { font-size: 1.8rem; }
-            .pricing-grid { grid-template-columns: 1fr; }
+        @media (max-width: 720px) {
+            body { padding: 20px 14px 88px; }
+            header { margin-bottom: 28px; }
+            h1 { font-size: 1.7rem; }
+            .subtitle { font-size: 0.95rem; }
+            .card { padding: 20px 14px; border-radius: 16px; margin-bottom: 18px; }
+            h2 { font-size: 1.2rem; margin-bottom: 16px; }
+            .step { padding: 14px; }
+            .step-title { font-size: 1rem; }
+            .step-desc { font-size: 0.92rem; }
+            .pricing-box { padding: 16px; }
+            .pricing-grid { grid-template-columns: 1fr; gap: 12px; }
+            .price { font-size: 1.6rem; }
+            .inline-code { display: block; width: 100%; font-size: 0.75rem; }
+            .code-block { padding: 14px 12px; }
+            .code-block pre {
+                padding-right: 0;
+                padding-top: 28px;
+                font-size: 0.72rem;
+            }
+            .copy-btn { top: 8px; right: 8px; width: 32px; height: 32px; }
+            .back-to-top { right: 14px; bottom: 14px; width: 44px; height: 44px; }
+            table.param { min-width: 0; font-size: 0.82rem; }
+            table.param thead { display: none; }
+            table.param, table.param tbody, table.param tr, table.param td { display: block; width: 100%; }
+            table.param tr {
+                background: rgba(15, 20, 25, 0.45);
+                border: 1px solid rgba(148, 163, 184, 0.12);
+                border-radius: 10px;
+                padding: 10px 12px;
+                margin-bottom: 10px;
+            }
+            table.param td {
+                border: none;
+                padding: 4px 0;
+            }
+            table.param td:first-child {
+                font-size: 0.9rem;
+                margin-bottom: 4px;
+            }
+            table.param td::before {
+                content: attr(data-label);
+                display: block;
+                color: #00d4ff;
+                font-size: 0.68rem;
+                font-family: Inter, sans-serif;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                margin-bottom: 2px;
+            }
         }
     </style>
 </head>
@@ -318,16 +373,11 @@
         <div class="card">
             <h2>Pricing</h2>
             <div class="pricing-box">
-                <div class="pricing-grid">
+                <div class="pricing-grid single">
                     <div class="price-item">
-                        <div class="price">$1</div>
+                        <div class="price">$0.25</div>
                         <div class="price-label">Setup Fee</div>
-                        <div class="price-note">One time</div>
-                    </div>
-                    <div class="price-item">
-                        <div class="price">$1</div>
-                        <div class="price-label">Monthly</div>
-                        <div class="price-note">Maintenance</div>
+                        <div class="price-note">One time · no monthly fee</div>
                     </div>
                 </div>
                 <div style="text-align: center; color: #86efac; font-size: 0.95rem; padding-top: 12px; border-top: 1px solid rgba(0, 212, 255, 0.1);">
@@ -362,16 +412,16 @@
                     <br>
                     <code class="inline-code">https://solacediamond.github.io/nowalletconnect/pay.html?merchant=MERCHANT_ID</code>
                 </div>
-                <table class="param">
+                <div class="table-wrap"><table class="param">
                     <thead>
                         <tr><th>Param</th><th>Required</th><th>If present</th><th>If missing</th></tr>
                     </thead>
                     <tbody>
-                        <tr><td>merchant</td><td>Yes</td><td>Shown on the page</td><td>Link is invalid</td></tr>
-                        <tr><td>amount</td><td>No</td><td>Locked. Customer cannot change it</td><td>Customer types the amount</td></tr>
-                        <tr><td>network</td><td>No</td><td>Locked to polygon or solana</td><td>Customer picks the network</td></tr>
+                        <tr><td data-label="Param">merchant</td><td data-label="Required">Yes</td><td data-label="If present">Shown on the page</td><td data-label="If missing">Link is invalid</td></tr>
+                        <tr><td data-label="Param">amount</td><td data-label="Required">No</td><td data-label="If present">Locked. Customer cannot change it</td><td data-label="If missing">Customer types the amount</td></tr>
+                        <tr><td data-label="Param">network</td><td data-label="Required">No</td><td data-label="If present">Locked to polygon or solana</td><td data-label="If missing">Customer picks the network</td></tr>
                     </tbody>
-                </table>
+                </table></div>
                 <div class="step-desc" style="margin-top:14px;">
                     <strong>Examples</strong><br>
                     Customer chooses amount and network:<br>
@@ -422,19 +472,19 @@
                 <div class="step-desc">
                     After USDT is confirmed, checkout redirects to your merchant webhook URL with these query params:
                 </div>
-                <table class="param">
+                <div class="table-wrap"><table class="param">
                     <thead>
                         <tr><th>Param</th><th>Meaning</th></tr>
                     </thead>
                     <tbody>
-                        <tr><td>status</td><td>success</td></tr>
-                        <tr><td>amount</td><td>USDT amount paid</td></tr>
-                        <tr><td>tx_hash</td><td>On-chain transaction hash</td></tr>
-                        <tr><td>merchant</td><td>Your merchant ID</td></tr>
-                        <tr><td>network</td><td>polygon or solana</td></tr>
-                        <tr><td>payment_id</td><td>Local payment reference</td></tr>
+                        <tr><td data-label="Param">status</td><td data-label="Meaning">success</td></tr>
+                        <tr><td data-label="Param">amount</td><td data-label="Meaning">USDT amount paid</td></tr>
+                        <tr><td data-label="Param">tx_hash</td><td data-label="Meaning">On-chain transaction hash</td></tr>
+                        <tr><td data-label="Param">merchant</td><td data-label="Meaning">Your merchant ID</td></tr>
+                        <tr><td data-label="Param">network</td><td data-label="Meaning">polygon or solana</td></tr>
+                        <tr><td data-label="Param">payment_id</td><td data-label="Meaning">Local payment reference</td></tr>
                     </tbody>
-                </table>
+                </table></div>
                 <div class="step-desc" style="margin-top:14px;">
                     Example return:
                     <br>
@@ -556,7 +606,7 @@ if (q.get("status") === "success" && q.get("merchant") === "MERCHANT_ID") {
                     <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </div>
                 <div class="faq-answer">
-                    $1 setup when you sign up, plus $1/month for maintenance. No transaction fees. You keep 100% of every payment.
+                    $0.25 one-time setup. No monthly fee. No transaction fees. You keep 100% of every payment.
                 </div>
             </div>
 
