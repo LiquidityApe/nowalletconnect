@@ -467,7 +467,7 @@
                     <br><br>
                     <strong>Base URL:</strong>
                     <br>
-                    <code class="inline-code">https://solacediamond.github.io/nowalletconnect/pay.html?merchant=MERCHANT_ID</code>
+                    <code class="inline-code">https://solacediamond.github.io/nowalletconnect/checkout.html?merchant=MERCHANT_ID</code>
                 </div>
                 <div class="table-wrap"><table class="param">
                     <thead>
@@ -482,13 +482,13 @@
                 <div class="step-desc" style="margin-top:14px;">
                     <strong>Examples</strong><br>
                     Customer chooses amount and network:<br>
-                    <code class="inline-code">pay.html?merchant=NWC</code><br><br>
+                    <code class="inline-code">checkout.html?merchant=NWC</code><br><br>
                     Fixed $49.99 package, customer picks network:<br>
-                    <code class="inline-code">pay.html?merchant=NWC&amp;amount=49.99</code><br><br>
+                    <code class="inline-code">checkout.html?merchant=NWC&amp;amount=49.99</code><br><br>
                     Fixed Solana, customer types amount:<br>
-                    <code class="inline-code">pay.html?merchant=NWC&amp;network=solana</code><br><br>
+                    <code class="inline-code">checkout.html?merchant=NWC&amp;network=solana</code><br><br>
                     Fully locked package:<br>
-                    <code class="inline-code">pay.html?merchant=NWC&amp;amount=49.99&amp;network=polygon</code>
+                    <code class="inline-code">checkout.html?merchant=NWC&amp;amount=49.99&amp;network=polygon</code>
                 </div>
             </div>
 
@@ -511,7 +511,7 @@
                         </svg>
                     </button>
                     <pre>&lt;div style="display:inline-block;text-align:center;"&gt;
-  &lt;a href="https://solacediamond.github.io/nowalletconnect/pay.html?merchant=MERCHANT_ID&amp;amount=49.99" style="text-decoration:none;"&gt;
+  &lt;a href="https://solacediamond.github.io/nowalletconnect/checkout.html?merchant=MERCHANT_ID&amp;amount=49.99" style="text-decoration:none;"&gt;
     &lt;button style="padding:12px 24px;background:linear-gradient(135deg,#00d4ff,#7c3aed);color:#0f1419;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:16px;"&gt;
       Pay 49.99 USDT
     &lt;/button&gt;
@@ -732,7 +732,7 @@ if (q.get("status") === "success" && q.get("merchant") === "MERCHANT_ID") {
             const id = (document.getElementById("aiMerchantId").value || "").trim() || "YOUR_MERCHANT_ID";
             const rawAmt = (document.getElementById("aiAmount").value || "").trim();
             const amount = rawAmt && !Number.isNaN(parseFloat(rawAmt)) ? String(parseFloat(rawAmt)) : "";
-            const pay = "https://solacediamond.github.io/nowalletconnect/pay.html";
+            const pay = "https://solacediamond.github.io/nowalletconnect/checkout.html";
             const link = amount ? (pay + "?merchant=" + id + "&amount=" + amount) : (pay + "?merchant=" + id);
             const el = document.getElementById("aiBrief");
             if (!el) return;
@@ -751,7 +751,7 @@ URL RULES
 - merchant is required. Mine is ${id}.
 - amount is optional. If present, lock the amount field. If missing, let the customer type it.
 - network is optional (polygon or solana). If present, lock it. If missing, let the customer choose.
-- Base host: https://solacediamond.github.io/nowalletconnect/pay.html
+- Base host: https://solacediamond.github.io/nowalletconnect/checkout.html
 
 ADD A PAY BUTTON
 Use this HTML. Keep the Powered by line.
