@@ -1875,7 +1875,7 @@ async function startAutoVerification() {
     if (!state.walletAddress || !state.expectedAmount) return;
 
     state.verifying = true;
-    state.watchStartedAt = Date.now() - 30 * 60 * 1000;
+    state.watchStartedAt = Date.now() - 60 * 1000;
     state.watchEndsAt = Date.now() + WATCH_MS;
     startCountdown();
 
@@ -1902,12 +1902,13 @@ async function startAutoVerification() {
             const result = await (await fetch(url)).json();
             console.log("verify result", result);
 
-            if (result.paid && result.tx) {
-                stopVerification();
-                setCountdownText("");
-                showSuccess(result.tx);
-                return;
-            }
+if (result.paid && result.tx) {
+    if (state.recordedTx === result.tx) return;
+    stopVerification();
+    setCountdownText("");
+    showSuccess(result.tx);
+    return;
+}
             setWatchStatus("Awaiting your payment...");
         } catch (e) {
             console.error(e);
@@ -1925,44 +1926,43 @@ async function startAutoVerification() {
 }
 
 async function showSuccess(txHash) {
-  console.log('showSuccess called with txHash:', txHash);
-  
-  // Display amount
-  document.getElementById('finalAmount').textContent = state.expectedAmount + ' USDT';
-  
-  // Display transaction hash with explorer link
-  const explorerUrl = state.network === 'polygon'
-    ? `https://polygonscan.com/tx/${txHash}`
-    : `https://solscan.io/tx/${txHash}`;
-  
-  const txLink = document.getElementById('txLink');
-  txLink.href = explorerUrl;
-  txLink.textContent = txHash.substring(0, 20) + '...';
-  txLink.title = txHash;
-  
-  console.log('Explorer URL:', explorerUrl);
+  if (!txHash) return;
+  if (state.recordedTx === txHash || state.recording) return;
 
-  // ✅ RECORD PAYMENT TO DATABASE
+  state.recording = true;
+  state.recordedTx = txHash;
+  stopVerification();
+
+  document.getElementById("finalAmount").textContent = state.expectedAmount + " USDT";
+
+  const explorerUrl = state.network === "polygon"
+    ? "https://polygonscan.com/tx/" + txHash
+    : "https://solscan.io/tx/" + txHash;
+
+  const txLink = document.getElementById("txLink");
+  txLink.href = explorerUrl;
+  txLink.textContent = txHash.substring(0, 20) + "...";
+  txLink.title = txHash;
+
   try {
-    const recorded = await recordPaymentToSheet({
-      payment_id: 'pay_' + Date.now(),
-      merchant_id: GATEWAY.merchantId || state.merchantId || '',
+    await recordPaymentToSheet({
+      payment_id: "pay_" + Date.now(),
+      merchant_id: GATEWAY.merchantId || state.merchantId || "",
       amount: state.expectedAmount,
       tx_hash: txHash,
       network: state.network,
-      return_url: GATEWAY.returnUrl || '',
+      return_url: GATEWAY.returnUrl || ""
     });
-    console.log('✅ Payment recorded to database:', recorded);
   } catch (e) {
-    console.error('❌ Database error:', e);
+    console.error(e);
+    state.recording = false;
+    state.recordedTx = "";
+    return;
   }
 
+  state.recording = false;
   goToSection(4);
-  
-  // Start redirect countdown
-  if (GATEWAY.isGatewayMode) {
-    startRedirectCountdown();
-  }
+  if (GATEWAY.isGatewayMode) startRedirectCountdown();
 }
 
         function goToSetup() {
