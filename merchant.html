@@ -407,7 +407,7 @@
             RANGE: "MERCHANTS!A:G"
         };
         const PAYMENTS = {
-            SHEET_ID: "1Zi3KS3HBRbvnHYslVQ1v9dKBOPRpHhqoCwVYcUJsmrI",
+            SHEET_ID: "1taoinvOhzoILkt-y1mViX8P2hvGWtpI8y8Jp-ZMYtUo",
             RANGE: "PAYMENTS!A:H"
         };
         const CHECKOUT_URL = "https://solacediamond.github.io/nowalletconnect/checkout.html";
@@ -579,52 +579,21 @@
             }
         }
 
-        function submitGoogleForm(payload) {
-            return new Promise((resolve, reject) => {
-                try {
-                    const iframeName = "nwc_gform_" + Date.now();
-                    const iframe = document.createElement("iframe");
-                    iframe.name = iframeName;
-                    iframe.style.display = "none";
-                    document.body.appendChild(iframe);
+        async function submitGoogleForm(payload) {
+    const formData = new FormData();
+    formData.append(FORM.FIELDS.merchantId, payload.merchantId);
+    formData.append(FORM.FIELDS.businessName, payload.businessName);
+    formData.append(FORM.FIELDS.polygonWallet, payload.polygonWallet);
+    formData.append(FORM.FIELDS.solanaWallet, payload.solanaWallet);
+    formData.append(FORM.FIELDS.email, payload.email);
+    formData.append(FORM.FIELDS.webhook, payload.webhook);
 
-                    const form = document.createElement("form");
-                    form.method = "POST";
-                    form.action = FORM.ACTION;
-                    form.target = iframeName;
-                    form.acceptCharset = "UTF-8";
-                    form.style.display = "none";
-
-                    const fields = {
-                        [FORM.FIELDS.merchantId]: payload.merchantId,
-                        [FORM.FIELDS.businessName]: payload.businessName,
-                        [FORM.FIELDS.polygonWallet]: payload.polygonWallet,
-                        [FORM.FIELDS.solanaWallet]: payload.solanaWallet,
-                        [FORM.FIELDS.email]: payload.email,
-                        [FORM.FIELDS.webhook]: payload.webhook,
-                        fvv: "1",
-                        pageHistory: "0"
-                    };
-                    Object.keys(fields).forEach(name => {
-                        const input = document.createElement("input");
-                        input.type = "hidden";
-                        input.name = name;
-                        input.value = fields[name];
-                        form.appendChild(input);
-                    });
-
-                    document.body.appendChild(form);
-                    form.submit();
-                    setTimeout(() => {
-                        form.remove();
-                        iframe.remove();
-                        resolve();
-                    }, 2500);
-                } catch (err) {
-                    reject(err);
-                }
-            });
-        }
+    await fetch(FORM.ACTION, {
+        method: "POST",
+        body: formData,
+        mode: "no-cors"
+    });
+}
 
         function sleep(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
